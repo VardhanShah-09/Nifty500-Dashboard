@@ -1,6 +1,8 @@
 import streamlit as st
 import sys
 from pathlib import Path
+from services.live_data import get_live_stock_data
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(ROOT))
 from utils.loader import load_data
@@ -21,7 +23,7 @@ def show():
 
 
     # -----------------------
-    # Sidebar
+    # Select Stock
     # -----------------------
     st.subheader("Select Stock")
 
@@ -30,6 +32,12 @@ def show():
         sorted(df["Ticker"].unique()),
         key="dashboard_stock"
     )
+    
+    # -----------------------
+    # Live Market Data
+    # -----------------------
+
+    live_data = get_live_stock_data(ticker)
 
     # -----------------------
     # Header
@@ -58,16 +66,24 @@ def show():
         )
 
     with col3:
-        st.metric(
-            "Average Close",
-            f"₹{df['Close'].mean():.2f}"
-        )
+
+        if live_data["success"]:
+            st.metric(
+                "Live Price",
+                f"₹{live_data['price']:.2f}"
+            )
+        else:
+            st.metric("Live Price", "N/A")
 
     with col4:
-        st.metric(
-            "Average Volume",
-            f"{df['Volume'].mean():,.0f}"
-        )
+
+        if live_data["success"]:
+            st.metric(
+                "Live Volume",
+                f"{live_data['volume']:,}"
+            )
+        else:
+            st.metric("Live Volume", "N/A")
 
     # -----------------------
     # Market Summary
@@ -109,23 +125,49 @@ def show():
         st.metric("Records", len(ticker_df))
 
     with col2:
-        st.metric(
-            "Latest Close",
-            f"₹{ticker_df.iloc[-1]['Close']:.2f}"
-        )
+
+      if live_data["success"]:
+            st.metric(
+                "Live Price",
+                f"₹{live_data['price']:.2f}"
+            )
 
     with col3:
-        st.metric(
-            "Highest",
-            f"₹{ticker_df['High'].max():.2f}"
-        )
+
+        if live_data["success"]:
+            st.metric(
+                "Today's High",
+                f"₹{live_data['high']:.2f}"
+            )
 
     with col4:
-        st.metric(
-            "Lowest",
-            f"₹{ticker_df['Low'].min():.2f}"
+
+        if live_data["success"]:
+            st.metric(
+                "Today's Low",
+                f"₹{live_data['low']:.2f}"
+            )
+
+
+    st.subheader("📈 Live Market")
+
+    if live_data["success"]:
+
+        c1, c2, c3, c4, c5 = st.columns(5)
+
+        c1.metric("Price", f"₹{live_data['price']:.2f}")
+        c2.metric("Open", f"₹{live_data['open']:.2f}")
+        c3.metric("High", f"₹{live_data['high']:.2f}")
+        c4.metric("Low", f"₹{live_data['low']:.2f}")
+        c5.metric("Volume", f"{live_data['volume']:,}")
+
+        st.caption(
+            f"Last Updated : {live_data['last_updated']}"
         )
 
+    else:
+
+        st.error(live_data["error"])
     # -----------------------
     # Preview
     # -----------------------

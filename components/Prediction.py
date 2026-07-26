@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from utils.loader import load_features, load_model
+from utils.loader import load_data, load_model
+from services.live_data import prepare_prediction_features
 
 def show():
     # -----------------------
@@ -14,7 +15,7 @@ def show():
     # -----------------------
     # Load Dataset
     # -----------------------
-    df = load_features()
+    df = load_data()
     model = load_model()
     
     # -----------------------
@@ -31,16 +32,11 @@ def show():
     # -----------------------
     # Selected Stock Data
     # -----------------------
-    stock_df = (
-        df[df["Ticker"] == ticker]
-        .sort_values("Date")
-    )
+    latest = prepare_prediction_features(ticker)
 
-    if stock_df.empty:
-        st.warning("No data available for the selected stock.")
+    if latest is None:
+        st.warning("No prediction data available.")
         st.stop()
-
-    latest = stock_df.iloc[-1]
     # -----------------------
     # Header
     # -----------------------
@@ -78,18 +74,24 @@ def show():
     # -----------------------
     # Prepare Model Input
     # -----------------------
-    features = latest[
-        [
+    X = pd.DataFrame(
+        [[
+            latest["Open"],
+            latest["High"],
+            latest["Low"],
+            latest["Volume"],
+            latest["SMA20"],
+            latest["SMA50"],
+        ]],
+        columns=[
             "Open",
             "High",
             "Low",
             "Volume",
             "SMA20",
-            "SMA50"
+            "SMA50",
         ]
-    ]
-
-    X = pd.DataFrame([features])
+    )
 
     # -----------------------
     # Predict Next Close Price

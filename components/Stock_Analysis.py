@@ -1,15 +1,19 @@
 import streamlit as st
 import sys
-import pandas as pd
 from pathlib import Path
+
+import plotly.express as px
+import plotly.graph_objects as go
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(ROOT))
 
 from utils.loader import load_data
-import plotly.express as px
-import plotly.graph_objects as go
+from services.live_data import get_historical_stock_data
+
 
 def show():
+
     # -----------------------
     # Page Configuration
     # -----------------------
@@ -18,10 +22,13 @@ def show():
         layout="wide"
     )
 
+    # -----------------------
+    # Load ticker list only
+    # -----------------------
     df = load_data()
 
     # -----------------------
-    # Sidebar Filters
+    # Sidebar
     # -----------------------
     st.sidebar.title("Stock Analysis")
 
@@ -31,59 +38,71 @@ def show():
         key="analysis_stock"
     )
 
-    min_date = df["Date"].min()
-    max_date = df["Date"].max()
-
-    date_range = st.sidebar.date_input(
-        "Select Date Range",
-        value=(min_date, max_date),
-        min_value=min_date,
-        max_value=max_date,
-        key="analysis_date_range"
+    period = st.sidebar.selectbox(
+        "Select Period",
+        [
+            "1mo",
+            "3mo",
+            "6mo",
+            "1y",
+            "2y",
+            "5y",
+            "max",
+        ],
+        index=5,
+        key="analysis_period"
     )
 
-    stock_df = df[df["Ticker"] == ticker].copy()
+    # -----------------------
+    # Fetch Historical Data
+    # -----------------------
+    stock_df = get_historical_stock_data(
+        ticker,
+        period,
+    )
 
-    if len(date_range) == 2:
-        start_date, end_date = date_range
-
-        stock_df = stock_df[
-            (stock_df["Date"] >= pd.to_datetime(start_date)) &
-            (stock_df["Date"] <= pd.to_datetime(end_date))
-        ]
+    if stock_df.empty:
+        st.warning("No historical data available.")
+        st.stop()
 
     stock_df = stock_df.sort_values("Date")
 
-    if stock_df.empty:
-        st.warning("No data available for the selected date range.")
-        st.stop()
-
     # -----------------------
-    # Stock Overview Metrics
+    # Header
     # -----------------------
-    st.title("Stock Analysis")
+    st.title("📈 Stock Analysis")
 
     st.caption(f"Historical analysis for {ticker}")
 
-
+    # -----------------------
+    # Metrics
+    # -----------------------
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Current Close",
-                f"₹{stock_df.iloc[-1]['Close']:.2f}")
+        st.metric(
+            "Current Close",
+            f"₹{stock_df.iloc[-1]['Close']:.2f}"
+        )
 
     with col2:
-        st.metric("Highest",
-                f"₹{stock_df['High'].max():.2f}")
+        st.metric(
+            "Highest",
+            f"₹{stock_df['High'].max():.2f}"
+        )
 
     with col3:
-        st.metric("Lowest",
-                f"₹{stock_df['Low'].min():.2f}")
+        st.metric(
+            "Lowest",
+            f"₹{stock_df['Low'].min():.2f}"
+        )
 
     with col4:
-        st.metric("Average Volume",
-                f"{stock_df['Volume'].mean():,.0f}")
-        
+        st.metric(
+            "Average Volume",
+            f"{stock_df['Volume'].mean():,.0f}"
+        )
+
     # -----------------------
     # Closing Price Chart
     # -----------------------
@@ -94,35 +113,41 @@ def show():
         title=f"{ticker} Closing Price"
     )
 
-    fig.update_layout(
-        template="plotly_dark"
-    )
+    fig.update_layout(template="plotly_dark")
 
-    st.plotly_chart(fig,width="stretch")
+    st.plotly_chart(
+        fig,
+        width="stretch"
+    )
 
     # -----------------------
     # Candlestick Chart
     # -----------------------
-    fig = go.Figure(data=[
-        go.Candlestick(
-            x=stock_df["Date"],
-            open=stock_df["Open"],
-            high=stock_df["High"],
-            low=stock_df["Low"],
-            close=stock_df["Close"]
-        )
-    ])
+    fig = go.Figure(
+        data=[
+            go.Candlestick(
+                x=stock_df["Date"],
+                open=stock_df["Open"],
+                high=stock_df["High"],
+                low=stock_df["Low"],
+                close=stock_df["Close"],
+            )
+        ]
+    )
 
     fig.update_layout(
         template="plotly_dark",
         title=f"{ticker} Candlestick Chart",
-        xaxis_rangeslider_visible=False
+        xaxis_rangeslider_visible=False,
     )
 
-    st.plotly_chart(fig,width="stretch")
+    st.plotly_chart(
+        fig,
+        width="stretch"
+    )
 
     # -----------------------
-    # Trading Volume Chart
+    # Volume Chart
     # -----------------------
     fig = px.bar(
         stock_df,
@@ -135,10 +160,13 @@ def show():
         template="plotly_dark"
     )
 
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(
+        fig,
+        width="stretch"
+    )
 
     # -----------------------
-    # Stock Statistics
+    # Statistics
     # -----------------------
     st.subheader("Stock Statistics")
 
@@ -154,12 +182,12 @@ def show():
         st.write(f"Average Volume : {stock_df['Volume'].mean():,.0f}")
 
     # -----------------------
-    # Historical Stock Data
+    # Historical Data
     # -----------------------
     st.subheader("Historical Data")
 
     st.dataframe(
         stock_df,
         width="stretch",
-        hide_index=True
+        hide_index=True,
     )

@@ -9,7 +9,7 @@ from components.Dashboard import show as dashboard
 from components.Stock_Analysis import show as stock_analysis
 from components.Prediction import show as prediction
 from components.Comparison import show as comparison
-from components.About import show as about
+from components.Market_Overview import show as market_overview
 from admin.User_Management import show_user_management
 
 
@@ -106,9 +106,9 @@ if st.session_state.is_admin:
     ):
         st.session_state.current_page = "User Management"
 
-# ---------------- About ----------------
+# ---------------- Market Overvieew ----------------
 if st.sidebar.button(
-    "ℹ️ About",
+    "ℹ️ Market Overview",
     use_container_width=True,
 ):
     st.session_state.current_page = "About"
@@ -155,4 +155,4 @@ elif page == "User Management":
     show_user_management()
 
 elif page == "About":
-    about()
+    market_overview()
