@@ -236,3 +236,68 @@ footer {
 .stCheckbox p {
     color: #FFFFFF !important;
 }
+
+/* ==========================================
+   USER MANAGEMENT
+========================================== */
+
+.user-card{
+    background:#1C1F26;
+    border:1px solid #2D313A;
+    border-radius:14px;
+    padding:22px;
+    margin-bottom:18px;
+    transition:0.25s;
+}
+
+.user-card:hover{
+    border-color:#00C853;
+    box-shadow:0 0 15px rgba(0,200,83,.18);
+}
+
+.user-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+}
+
+.user-name{
+    color:white;
+    font-size:22px;
+    font-weight:700;
+}
+
+.user-role{
+    background:#00C853;
+    color:white;
+    padding:5px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:700;
+}
+
+.user-role.user{
+    background:#39424E;
+}
+
+.user-info{
+    color:#B0BEC5;
+    line-height:1.9;
+    font-size:15px;
+}
+
+.user-label{
+    color:white;
+    font-weight:600;
+}
+
+.user-status-active{
+    color:#00C853;
+    font-weight:700;
+}
+
+.user-status-disabled{
+    color:#FF5252;
+    font-weight:700;
+}
