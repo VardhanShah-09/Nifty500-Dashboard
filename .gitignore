@@ -33,9 +33,10 @@ Thumbs.db
 *.log
 
 # Trained models
-models/
+random_forest.pkl
 
 # Large datasets
 Data/
 
+# SQLite Database
 users.db

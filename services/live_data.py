@@ -109,6 +109,33 @@ def get_historical_stock_data(symbol: str, period: str = "5y"):
         ]
 
         df["Date"] = pd.to_datetime(df["Date"])
+        
+        # =====================================================
+        # Technical Indicators
+        # =====================================================
+
+        # Simple Moving Averages
+        df["SMA20"] = df["Close"].rolling(20).mean()
+        df["SMA50"] = df["Close"].rolling(50).mean()
+
+        # Relative Strength Index
+        df["RSI"] = calculate_rsi(df["Close"])
+
+        # MACD
+        (
+            df["EMA12"],
+            df["EMA26"],
+            df["MACD"],
+            df["Signal"],
+            df["Histogram"],
+        ) = calculate_macd(df["Close"])
+        
+        # Bollinger Bands
+        (
+            df["Upper_Band"],
+            _,
+            df["Lower_Band"],
+        ) = calculate_bollinger_bands(df["Close"])
 
         return df
 
@@ -117,7 +144,85 @@ def get_historical_stock_data(symbol: str, period: str = "5y"):
         print(f"Historical Data Error: {e}")
 
         return pd.DataFrame()
+
+# =====================================================
+# RSI Indicator
+# =====================================================
+
+def calculate_rsi(close_prices, period=14):
+    """
+    Calculate Relative Strength Index (RSI).
+    Returns a Pandas Series.
+    """
+
+    delta = close_prices.diff()
+
+    gain = delta.where(delta > 0, 0.0)
+    loss = -delta.where(delta < 0, 0.0)
+
+    avg_gain = gain.rolling(window=period).mean()
+    avg_loss = loss.rolling(window=period).mean()
+
+    rs = avg_gain / avg_loss
+
+    rsi = 100 - (100 / (1 + rs))
+
+    return rsi
+
+
+# =====================================================
+# Exponential Moving Average (EMA)
+# =====================================================
+
+def calculate_ema(close_prices, period):
+    """
+    Calculate Exponential Moving Average (EMA).
+    Returns a Pandas Series.
+    """
+
+    return close_prices.ewm(span=period, adjust=False).mean()
+
+
+# =====================================================
+# MACD Indicator
+# =====================================================
+
+def calculate_macd(close_prices):
+    """
+    Calculate MACD, Signal Line and Histogram.
+    Returns three Pandas Series.
+    """
+
+    ema12 = calculate_ema(close_prices, 12)
+    ema26 = calculate_ema(close_prices, 26)
+
+    macd = ema12 - ema26
+    signal = macd.ewm(span=9, adjust=False).mean()
+    histogram = macd - signal
+
+    return ema12, ema26, macd, signal, histogram
     
+
+# =====================================================
+# Bollinger Bands
+# =====================================================
+
+def calculate_bollinger_bands(close_prices, period=20, std_dev=2):
+    """
+    Calculate Bollinger Bands.
+    Returns Upper Band, Middle Band (SMA), and Lower Band.
+    """
+
+    middle_band = close_prices.rolling(window=period).mean()
+
+    rolling_std = close_prices.rolling(window=period).std()
+
+    upper_band = middle_band + (rolling_std * std_dev)
+    lower_band = middle_band - (rolling_std * std_dev)
+
+    return upper_band, middle_band, lower_band
+
+
 def prepare_prediction_features(symbol: str):
     """
     Prepare the latest feature vector for the prediction model.
@@ -159,6 +264,8 @@ def prepare_prediction_features(symbol: str):
             .rolling(window=50)
             .mean()
         )
+        
+        df["RSI"] = calculate_rsi(df["Close"])
 
         # Remove rows where moving averages
         # cannot yet be calculated
@@ -171,13 +278,30 @@ def prepare_prediction_features(symbol: str):
 
         return {
             "Date": latest["Date"],
+
             "Open": latest["Open"],
             "High": latest["High"],
             "Low": latest["Low"],
             "Close": latest["Close"],
             "Volume": latest["Volume"],
+
+            # Moving Averages
             "SMA20": latest["SMA20"],
             "SMA50": latest["SMA50"],
+            "EMA12": latest["EMA12"],
+            "EMA26": latest["EMA26"],
+
+            # Momentum
+            "RSI": latest["RSI"],
+
+            # MACD
+            "MACD": latest["MACD"],
+            "Signal": latest["Signal"],
+            "Histogram": latest["Histogram"],
+
+            # Bollinger Bands
+            "Upper_Band": latest["Upper_Band"],
+            "Lower_Band": latest["Lower_Band"],
         }
 
     except Exception as e:

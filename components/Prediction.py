@@ -70,33 +70,95 @@ def show():
 
     with col6:
         st.metric("SMA50", f"₹{latest['SMA50']:.2f}")
+    
+    # -----------------------
+    # Technical Indicators
+    # -----------------------
+
+    st.subheader("Technical Indicators")
+
+    c1, c2, c3, c4 = st.columns(4)
+
+    with c1:
+        st.metric(
+            "RSI",
+            f"{latest['RSI']:.2f}"
+        )
+
+    with c2:
+        st.metric(
+            "MACD",
+            f"{latest['MACD']:.2f}"
+        )
+
+    with c3:
+        st.metric(
+            "Signal",
+            f"{latest['Signal']:.2f}"
+        )
+
+    with c4:
+        st.metric(
+            "Histogram",
+            f"{latest['Histogram']:.2f}"
+        )
+
+    c5, c6 = st.columns(2)
+
+    with c5:
+        st.metric(
+            "Upper Band",
+            f"₹{latest['Upper_Band']:.2f}"
+        )
+
+    with c6:
+        st.metric(
+            "Lower Band",
+            f"₹{latest['Lower_Band']:.2f}"
+        )
+
+    st.divider()
         
     # -----------------------
     # Prepare Model Input
     # -----------------------
-    X = pd.DataFrame(
-        [[
-            latest["Open"],
-            latest["High"],
-            latest["Low"],
-            latest["Volume"],
-            latest["SMA20"],
-            latest["SMA50"],
-        ]],
-        columns=[
-            "Open",
-            "High",
-            "Low",
-            "Volume",
-            "SMA20",
-            "SMA50",
-        ]
-    )
+    X = pd.DataFrame([{
+        "Open": latest["Open"],
+        "High": latest["High"],
+        "Low": latest["Low"],
+        "Volume": latest["Volume"],
+
+        "SMA20": latest["SMA20"],
+        "SMA50": latest["SMA50"],
+
+        "EMA12": latest["EMA12"],
+        "EMA26": latest["EMA26"],
+
+        "RSI": latest["RSI"],
+
+        "MACD": latest["MACD"],
+        "Signal": latest["Signal"],
+        "Histogram": latest["Histogram"],
+
+        "Upper_Band": latest["Upper_Band"],
+        "Lower_Band": latest["Lower_Band"],
+    }])
 
     # -----------------------
     # Predict Next Close Price
     # -----------------------
     prediction = model.predict(X)[0]
+    
+    # -----------------------
+    # Prediction Summary
+    # -----------------------
+
+    change = prediction - latest["Close"]
+
+    change_pct = (
+        change /
+        latest["Close"]
+    ) * 100
 
     # -----------------------
     # Prediction Result
@@ -123,8 +185,28 @@ def show():
         st.metric(
             "Predicted Next Close",
             f"₹{prediction:.2f}",
-            delta=f"₹{prediction - latest['Close']:.2f}"
+            delta=f"{change:+.2f} ({change_pct:+.2f}%)"
         )
+
+    # -----------------------
+    # Prediction Direction
+    # -----------------------
+
+    if prediction > latest["Close"]:
+
+        st.success(
+            "📈 The model predicts an upward movement for the next trading session."
+        )
+
+    elif prediction < latest["Close"]:
+
+        st.error("📉 The model predicts a downward movement for the next trading session.")
+
+    else:
+
+        st.info("➖ The model predicts minimal price movement.")
+
+    st.divider()
 
     # -----------------------
     # Model Performance
@@ -134,15 +216,32 @@ def show():
     st.write("Model : Random Forest Regressor")
     st.write("Training Split : 80%")
     st.write("Testing Split : 20%")
-    st.write("Features Used : Open, High, Low, Volume, SMA20, SMA50")
+    st.write("""
+        **Features Used**
+
+        • Open
+        • High
+        • Low
+        • Volume
+        • SMA20
+        • SMA50
+        • EMA12
+        • EMA26
+        • RSI
+        • MACD
+        • Signal
+        • Histogram
+        • Upper Bollinger Band
+        • Lower Bollinger Band
+        """)
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric("MAE", "30.79")
+        st.metric("MAE", "YOUR_MAE")
 
     with col2:
-        st.metric("RMSE", "136.72")
+        st.metric("RMSE", "YOUR_RMSE")
 
     with col3:
-        st.metric("R² Score", "0.9996")
+        st.metric("R² Score", "YOUR_R2")
