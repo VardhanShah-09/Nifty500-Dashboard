@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+.pytest_cache/
+.mypy_cache/
 
 # Virtual Environment
 .venv/
@@ -26,17 +28,27 @@ Thumbs.db
 .pytest_cache/
 .mypy_cache/
 
-# Model cache
-*.joblib
-
 # Logs
 *.log
 
 # Trained models
 random_forest.pkl
+models/*.pkl
+models/*.keras
+models/*.h5
+models/*.json
+
+# Scalers
+feature_scaler.pkl
+target_scaler.pkl
+*.joblib
 
 # Large datasets
 Data/
 
 # SQLite Database
 users.db
+
+# TensorFlow
+logs/
+tensorboard_logs/

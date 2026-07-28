@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
-from utils.loader import load_data, load_model
+from utils.loader import load_data
 from services.live_data import prepare_prediction_features
+from services.prediction_model import predict_stock
 
 def show():
     # -----------------------
@@ -16,33 +17,44 @@ def show():
     # Load Dataset
     # -----------------------
     df = load_data()
-    model = load_model()
     
     # -----------------------
     # Sidebar
     # -----------------------
     st.sidebar.title("Prediction")
-
+    
     ticker = st.sidebar.selectbox(
         "Select Stock",
         sorted(df["Ticker"].unique()),
         key="prediction_stock"
     )
 
+    model_name = st.sidebar.selectbox(
+        "Prediction Model",
+        [
+            "Random Forest",
+            "XGBoost",
+            "LSTM"
+        ],
+        key="prediction_model"
+    )
+
     # -----------------------
     # Selected Stock Data
     # -----------------------
-    latest = prepare_prediction_features(ticker)
+    result = prepare_prediction_features(ticker)
 
-    if latest is None:
+    if result is None:
         st.warning("No prediction data available.")
         st.stop()
+
+    latest, stock_history = result
     # -----------------------
     # Header
     # -----------------------
     st.title("Stock Price Prediction")
 
-    st.caption("Predict the next closing price using the trained Random Forest model.")
+    st.caption(f"Predict the next closing price using the trained {model_name} model.")
 
     # -----------------------
     # Latest Stock Values
@@ -120,34 +132,23 @@ def show():
     st.divider()
         
     # -----------------------
-    # Prepare Model Input
-    # -----------------------
-    X = pd.DataFrame([{
-        "Open": latest["Open"],
-        "High": latest["High"],
-        "Low": latest["Low"],
-        "Volume": latest["Volume"],
-
-        "SMA20": latest["SMA20"],
-        "SMA50": latest["SMA50"],
-
-        "EMA12": latest["EMA12"],
-        "EMA26": latest["EMA26"],
-
-        "RSI": latest["RSI"],
-
-        "MACD": latest["MACD"],
-        "Signal": latest["Signal"],
-        "Histogram": latest["Histogram"],
-
-        "Upper_Band": latest["Upper_Band"],
-        "Lower_Band": latest["Lower_Band"],
-    }])
-
-    # -----------------------
     # Predict Next Close Price
     # -----------------------
-    prediction = model.predict(X)[0]
+
+    if model_name == "LSTM":
+
+        prediction = predict_stock(
+            model_name=model_name,
+            latest=latest,
+            history=stock_history
+        )
+
+    else:
+
+        prediction = predict_stock(
+            model_name=model_name,
+            latest=latest
+        )
     
     # -----------------------
     # Prediction Summary
@@ -213,7 +214,7 @@ def show():
     # -----------------------
     st.subheader("Model Information")
 
-    st.write("Model : Random Forest Regressor")
+    st.write(f"Model : {model_name}")
     st.write("Training Split : 80%")
     st.write("Testing Split : 20%")
     st.write("""

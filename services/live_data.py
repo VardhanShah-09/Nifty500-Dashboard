@@ -276,7 +276,7 @@ def prepare_prediction_features(symbol: str):
 
         latest = df.iloc[-1]
 
-        return {
+        latest_data = {
             "Date": latest["Date"],
 
             "Open": latest["Open"],
@@ -303,6 +303,8 @@ def prepare_prediction_features(symbol: str):
             "Upper_Band": latest["Upper_Band"],
             "Lower_Band": latest["Lower_Band"],
         }
+        
+        return latest_data, df
 
     except Exception as e:
 
