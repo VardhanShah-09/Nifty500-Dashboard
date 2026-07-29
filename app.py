@@ -12,18 +12,6 @@ from components.Comparison import show as comparison
 from components.Market_Overview import show as market_overview
 from admin.User_Management import show_user_management
 
-
-# =====================================================
-# Page Configuration
-# =====================================================
-
-st.set_page_config(
-    page_title="Nifty500 Dashboard",
-    page_icon="📈",
-    layout="wide"
-)
-
-
 # =====================================================
 # Session State Initialization
 # =====================================================
@@ -56,82 +44,46 @@ if not st.session_state.logged_in:
 # =====================================================
 # Sidebar
 # =====================================================
+with st.sidebar:
+    st.subheader("📈 Nifty500")
+    if st.button("🏠 Dashboard", width= 'stretch'):
+        st.session_state.current_page = "Dashboard"
 
-st.sidebar.title("📈 Nifty500 Dashboard")
+    if st.button("📊 Stock Analysis", width='stretch'):
+        st.session_state.current_page = "Stock Analysis"
 
-st.sidebar.write(f"**{st.session_state.user['full_name']}**")
+    if st.button("🤖 Prediction", width='stretch'):
+        st.session_state.current_page = "Prediction"
 
-if st.session_state.is_admin:
-    st.sidebar.info("Administrator")
-else:
-    st.sidebar.info("User")
+    if st.button("⚖️ Comparison", width='stretch'):
+        st.session_state.current_page = "Comparison"
+
+    if st.button("ℹ️ Market Overview", width='stretch'):
+        st.session_state.current_page = "About"
+    
+    if st.session_state.is_admin:
+        if st.button("👥 User Management", width='stretch'):
+            st.session_state.current_page = "User Management"
+    
+
+    st.markdown(
+        f"### {st.session_state.user['full_name']}")
+
+    if st.session_state.is_admin:
+        st.write("Admin")
+    else:
+        st.write("User")
 
 
-st.sidebar.subheader("Navigation")
+    if st.button("🚪 Logout", key="nav_logout", width='stretch'):
 
-# ---------------- Dashboard ----------------
-if st.sidebar.button(
-    "🏠 Dashboard",
-    use_container_width=True,
-):
-    st.session_state.current_page = "Dashboard"
+        st.session_state.logged_in = False
+        st.session_state.user = None
+        st.session_state.is_admin = False
+        st.session_state.role = "USER"
+        st.session_state.current_page = "Dashboard"
 
-# ---------------- Stock Analysis ----------------
-if st.sidebar.button(
-    "📈 Stock Analysis",
-    use_container_width=True,
-):
-    st.session_state.current_page = "Stock Analysis"
-
-# ---------------- Prediction ----------------
-if st.sidebar.button(
-    "🤖 Prediction",
-    use_container_width=True,
-):
-    st.session_state.current_page = "Prediction"
-
-# ---------------- Comparison ----------------
-if st.sidebar.button(
-    "⚖️ Comparison",
-    use_container_width=True,
-):
-    st.session_state.current_page = "Comparison"
-
-# ---------------- User Management ----------------
-if st.session_state.is_admin:
-
-    if st.sidebar.button(
-        "👥 User Management",
-        use_container_width=True,
-    ):
-        st.session_state.current_page = "User Management"
-
-# ---------------- Market Overvieew ----------------
-if st.sidebar.button(
-    "ℹ️ Market Overview",
-    use_container_width=True,
-):
-    st.session_state.current_page = "About"
-
-st.sidebar.markdown("---")
-
-# =====================================================
-# Logout
-# =====================================================
-
-if st.sidebar.button(
-    "🚪 Logout",
-    use_container_width=True,
-):
-
-    st.session_state.logged_in = False
-    st.session_state.user = None
-    st.session_state.is_admin = False
-    st.session_state.role = "USER"
-    st.session_state.current_page = "Dashboard"
-
-    st.rerun()
-
+        st.rerun()
 
 # =====================================================
 # Main Content
@@ -151,8 +103,8 @@ elif page == "Prediction":
 elif page == "Comparison":
     comparison()
 
-elif page == "User Management":
-    show_user_management()
-
 elif page == "About":
     market_overview()
+
+elif page == "User Management":
+    show_user_management()

@@ -18,65 +18,75 @@ from services.live_data import get_historical_stock_data
 def show():
 
     # =====================================================
-    # Page Configuration
-    # =====================================================
-    st.set_page_config(
-        page_title="Stock Comparison",
-        layout="wide"
-    )
-
-    # =====================================================
-    # Load Stock List
+    # Load Dataset
     # =====================================================
     df = load_data()
 
     # =====================================================
-    # Sidebar
+    # Page Header
     # =====================================================
-    st.sidebar.title("📊 Stock Comparison")
+    st.title("Stock Comparison")
+    st.caption(
+        "Compare the historical performance and technical indicators of two Nifty500 stocks."
+    )
 
+    st.divider()
+
+    # =====================================================
+    # Comparison Configuration
+    # =====================================================
     stocks = sorted(df["Ticker"].unique())
 
-    stock1 = st.sidebar.selectbox(
-        "First Stock",
-        stocks,
-        index=0,
-        key="comparison_stock1"
-    )
+    col1, col2, col3 = st.columns(3)
 
-    stock2 = st.sidebar.selectbox(
-        "Second Stock",
-        stocks,
-        index=1,
-        key="comparison_stock2"
-    )
+    with col1:
 
-    period = st.sidebar.selectbox(
-        "Time Period",
-        [
-            "1mo",
-            "3mo",
-            "6mo",
-            "1y",
-            "2y",
-            "5y",
-            "max"
-        ],
-        index=5,
-        key="comparison_period"
-    )
+        stock1 = st.selectbox(
+            "First Stock",
+            stocks,
+            index=0,
+            key="comparison_stock1",
+        )
+
+    with col2:
+
+        stock2 = st.selectbox(
+            "Second Stock",
+            stocks,
+            index=1,
+            key="comparison_stock2",
+        )
+
+    with col3:
+
+        period = st.selectbox(
+            "Time Period",
+            [
+                "1mo",
+                "3mo",
+                "6mo",
+                "1y",
+                "2y",
+                "5y",
+                "max",
+            ],
+            index=5,
+            key="comparison_period",
+        )
+
+    st.divider()
 
     # =====================================================
     # Historical Data
     # =====================================================
     stock1_df = get_historical_stock_data(
         stock1,
-        period
+        period,
     )
 
     stock2_df = get_historical_stock_data(
         stock2,
-        period
+        period,
     )
 
     if stock1_df.empty or stock2_df.empty:
@@ -94,114 +104,125 @@ def show():
 
     comparison_df = pd.concat(
         [stock1_df, stock2_df],
-        ignore_index=True
+        ignore_index=True,
     )
 
     # =====================================================
-    # Header
+    # Latest Market Overview
     # =====================================================
-    st.title("📊 Stock Comparison")
+    st.subheader("Latest Market Overview")
 
-    st.caption(
-        "Compare technical indicators and historical performance."
-    )
+    left, right = st.columns(2)
 
-    # =====================================================
-    # Latest Market Metrics
-    # =====================================================
-    st.subheader("Latest Market Metrics")
-
-    c1, c2 = st.columns(2)
-
-    with c1:
+    with left:
 
         st.markdown(f"### {stock1}")
 
-        st.metric(
-            "Close",
-            f"₹{latest1['Close']:.2f}"
-        )
+        c1, c2 = st.columns(2)
 
-        st.metric(
-            "High",
-            f"₹{latest1['High']:.2f}"
-        )
+        with c1:
 
-        st.metric(
-            "Low",
-            f"₹{latest1['Low']:.2f}"
-        )
+            st.metric(
+                "Current Price",
+                f"₹{latest1['Close']:.2f}",
+            )
 
-        st.metric(
-            "Volume",
-            f"{latest1['Volume']:,.0f}"
-        )
+            st.metric(
+                "High",
+                f"₹{latest1['High']:.2f}",
+            )
 
-    with c2:
+        with c2:
+
+            st.metric(
+                "Low",
+                f"₹{latest1['Low']:.2f}",
+            )
+
+            st.metric(
+                "Volume",
+                f"{latest1['Volume']:,.0f}",
+            )
+
+    with right:
 
         st.markdown(f"### {stock2}")
 
-        st.metric(
-            "Close",
-            f"₹{latest2['Close']:.2f}"
-        )
+        c1, c2 = st.columns(2)
 
-        st.metric(
-            "High",
-            f"₹{latest2['High']:.2f}"
-        )
+        with c1:
 
-        st.metric(
-            "Low",
-            f"₹{latest2['Low']:.2f}"
-        )
+            st.metric(
+                "Current Price",
+                f"₹{latest2['Close']:.2f}",
+            )
 
-        st.metric(
-            "Volume",
-            f"{latest2['Volume']:,.0f}"
-        )
+            st.metric(
+                "High",
+                f"₹{latest2['High']:.2f}",
+            )
+
+        with c2:
+
+            st.metric(
+                "Low",
+                f"₹{latest2['Low']:.2f}",
+            )
+
+            st.metric(
+                "Volume",
+                f"{latest2['Volume']:,.0f}",
+            )
 
     st.divider()
 
     # =====================================================
     # Technical Comparison
     # =====================================================
-    st.subheader("Technical Indicator Comparison")
+    st.subheader("Technical Comparison")
 
-    tc1, tc2 = st.columns(2)
+    left, right = st.columns(2)
 
-    with tc1:
+    with left:
 
-        st.metric(
+        st.markdown(f"### {stock1}")
+
+        tc1, tc2, tc3 = st.columns(3)
+
+        tc1.metric(
             "RSI",
-            f"{latest1['RSI']:.2f}"
+            f"{latest1['RSI']:.2f}",
         )
 
-        st.metric(
+        tc2.metric(
             "MACD",
-            f"{latest1['MACD']:.2f}"
+            f"{latest1['MACD']:.2f}",
         )
 
-        st.metric(
+        tc3.metric(
             "SMA20",
-            f"₹{latest1['SMA20']:.2f}"
+            f"₹{latest1['SMA20']:.2f}",
         )
 
-    with tc2:
+    with right:
 
-        st.metric(
+        st.markdown(f"### {stock2}")
+
+        tc1, tc2, tc3 = st.columns(3)
+
+        tc1.metric(
             "RSI",
-            f"{latest2['RSI']:.2f}"
+            f"{latest2['RSI']:.2f}",
         )
 
-        st.metric(
+        tc2.metric(
             "MACD",
-            f"{latest2['MACD']:.2f}"
+            f"{latest2['MACD']:.2f}",
         )
 
-        st.metric(
+        tc3.metric(
             "SMA20",
-            f"₹{latest2['SMA20']:.2f}"
+            f"₹{latest2['SMA20']:.2f}",
         )
 
     st.divider()
@@ -209,26 +230,36 @@ def show():
     # =====================================================
     # Closing Price Comparison
     # =====================================================
-    st.subheader("Closing Price Comparison")
+    st.subheader(" Closing Price Comparison")
 
     fig = px.line(
         comparison_df,
         x="Date",
         y="Close",
-        color="Ticker"
+        color="Ticker",
     )
 
     fig.update_layout(
-        template="plotly_dark"
+        template="plotly_dark",
+        title="Closing Price Comparison",
+        height=500,
+        hovermode="x unified",
+        legend=dict(
+            orientation="h",
+            y=1.02,
+            x=0,
+        ),
     )
 
     st.plotly_chart(
         fig,
-        width="stretch"
+        width="stretch",
     )
 
+    st.divider()
+
     # =====================================================
-    # SMA Comparison
+    # Moving Average Comparison
     # =====================================================
     st.subheader("Moving Average Comparison")
 
@@ -238,7 +269,7 @@ def show():
         go.Scatter(
             x=stock1_df["Date"],
             y=stock1_df["SMA20"],
-            name=f"{stock1} SMA20"
+            name=f"{stock1} SMA20",
         )
     )
 
@@ -246,7 +277,7 @@ def show():
         go.Scatter(
             x=stock2_df["Date"],
             y=stock2_df["SMA20"],
-            name=f"{stock2} SMA20"
+            name=f"{stock2} SMA20",
         )
     )
 
@@ -255,7 +286,7 @@ def show():
             x=stock1_df["Date"],
             y=stock1_df["SMA50"],
             name=f"{stock1} SMA50",
-            line=dict(dash="dot")
+            line=dict(dash="dot"),
         )
     )
 
@@ -264,112 +295,66 @@ def show():
             x=stock2_df["Date"],
             y=stock2_df["SMA50"],
             name=f"{stock2} SMA50",
-            line=dict(dash="dot")
+            line=dict(dash="dot"),
         )
     )
 
     fig.update_layout(
         template="plotly_dark",
-        height=500
+        height=500,
+        hovermode="x unified",
     )
 
     st.plotly_chart(
         fig,
-        width="stretch"
-    )
-
-    # =====================================================
-    # Bollinger Band Comparison
-    # =====================================================
-    st.subheader("Bollinger Bands")
-
-    fig = go.Figure()
-
-    fig.add_trace(
-        go.Scatter(
-            x=stock1_df["Date"],
-            y=stock1_df["Upper_Band"],
-            name=f"{stock1} Upper"
-        )
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            x=stock1_df["Date"],
-            y=stock1_df["Lower_Band"],
-            name=f"{stock1} Lower"
-        )
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            x=stock2_df["Date"],
-            y=stock2_df["Upper_Band"],
-            name=f"{stock2} Upper"
-        )
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            x=stock2_df["Date"],
-            y=stock2_df["Lower_Band"],
-            name=f"{stock2} Lower"
-        )
-    )
-
-    fig.update_layout(
-        template="plotly_dark",
-        height=500
-    )
-
-    st.plotly_chart(
-        fig,
-        width="stretch"
+        width="stretch",
     )
 
     st.divider()
+
     # =====================================================
     # RSI Comparison
     # =====================================================
     st.subheader("RSI Comparison")
 
-    fig = go.Figure()
+    rsi_fig = go.Figure()
 
-    fig.add_trace(
+    rsi_fig.add_trace(
         go.Scatter(
             x=stock1_df["Date"],
             y=stock1_df["RSI"],
-            name=stock1
+            name=stock1,
         )
     )
 
-    fig.add_trace(
+    rsi_fig.add_trace(
         go.Scatter(
             x=stock2_df["Date"],
             y=stock2_df["RSI"],
-            name=stock2
+            name=stock2,
         )
     )
 
-    fig.add_hline(
+    rsi_fig.add_hline(
         y=70,
-        line_dash="dash"
+        line_dash="dash",
     )
 
-    fig.add_hline(
+    rsi_fig.add_hline(
         y=30,
-        line_dash="dash"
+        line_dash="dash",
     )
 
-    fig.update_layout(
+    rsi_fig.update_layout(
         template="plotly_dark",
         height=350,
-        yaxis=dict(range=[0, 100])
+        hovermode="x unified",
+        yaxis=dict(range=[0, 100]),
     )
 
     st.plotly_chart(
-        fig,
-        width="stretch"
+        rsi_fig,
+        width="stretch",
     )
 
     st.divider()
@@ -379,50 +364,51 @@ def show():
     # =====================================================
     st.subheader("MACD Comparison")
 
-    fig = go.Figure()
+    macd_fig = go.Figure()
 
-    fig.add_trace(
+    macd_fig.add_trace(
         go.Scatter(
             x=stock1_df["Date"],
             y=stock1_df["MACD"],
-            name=f"{stock1} MACD"
+            name=f"{stock1} MACD",
         )
     )
 
-    fig.add_trace(
+    macd_fig.add_trace(
         go.Scatter(
             x=stock2_df["Date"],
             y=stock2_df["MACD"],
-            name=f"{stock2} MACD"
+            name=f"{stock2} MACD",
         )
     )
 
-    fig.add_trace(
+    macd_fig.add_trace(
         go.Scatter(
             x=stock1_df["Date"],
             y=stock1_df["Signal"],
             name=f"{stock1} Signal",
-            line=dict(dash="dot")
+            line=dict(dash="dot"),
         )
     )
 
-    fig.add_trace(
+    macd_fig.add_trace(
         go.Scatter(
             x=stock2_df["Date"],
             y=stock2_df["Signal"],
             name=f"{stock2} Signal",
-            line=dict(dash="dot")
+            line=dict(dash="dot"),
         )
     )
 
-    fig.update_layout(
+    macd_fig.update_layout(
         template="plotly_dark",
-        height=450
+        height=450,
+        hovermode="x unified",
     )
 
     st.plotly_chart(
-        fig,
-        width="stretch"
+        macd_fig,
+        width="stretch",
     )
 
     st.divider()
@@ -430,24 +416,24 @@ def show():
     # =====================================================
     # Volume Comparison
     # =====================================================
-    st.subheader("Trading Volume Comparison")
+    st.subheader("Volume Comparison")
 
-    fig = px.bar(
+    volume_fig = px.bar(
         comparison_df,
         x="Date",
         y="Volume",
         color="Ticker",
-        barmode="group"
+        barmode="group",
     )
 
-    fig.update_layout(
+    volume_fig.update_layout(
         template="plotly_dark",
-        height=450
+        height=450,
     )
 
     st.plotly_chart(
-        fig,
-        width="stretch"
+        volume_fig,
+        width="stretch",
     )
 
     st.divider()
@@ -467,57 +453,34 @@ def show():
 
         return "🟡 Sideways"
 
-
     summary = pd.DataFrame({
 
         "Indicator": [
-
             "Trend",
-
             "RSI",
-
             "MACD",
-
             "Close",
-
             "SMA20",
-
             "SMA50",
-
         ],
 
         stock1: [
-
             get_trend(latest1),
-
-            round(latest1["RSI"],2),
-
-            round(latest1["MACD"],2),
-
-            round(latest1["Close"],2),
-
-            round(latest1["SMA20"],2),
-
-            round(latest1["SMA50"],2),
-
+            round(latest1["RSI"], 2),
+            round(latest1["MACD"], 2),
+            round(latest1["Close"], 2),
+            round(latest1["SMA20"], 2),
+            round(latest1["SMA50"], 2),
         ],
 
         stock2: [
-
             get_trend(latest2),
-
-            round(latest2["RSI"],2),
-
-            round(latest2["MACD"],2),
-
-            round(latest2["Close"],2),
-
-            round(latest2["SMA20"],2),
-
-            round(latest2["SMA50"],2),
-
-        ]
-
+            round(latest2["RSI"], 2),
+            round(latest2["MACD"], 2),
+            round(latest2["Close"], 2),
+            round(latest2["SMA20"], 2),
+            round(latest2["SMA50"], 2),
+        ],
     })
 
     summary = summary.astype(str)
@@ -525,89 +488,87 @@ def show():
     st.dataframe(
         summary,
         width="stretch",
-        hide_index=True
+        hide_index=True,
     )
 
     st.divider()
 
     # =====================================================
-    # Statistics
+    # Performance Statistics
     # =====================================================
-    st.subheader("Statistics")
+    st.subheader("Performance Statistics")
 
     stats = pd.DataFrame({
 
-        "Statistic":[
-
+        "Statistic": [
             "Average Close",
-
             "Highest Close",
-
             "Lowest Close",
-
             "Average Volume",
-
             "Trading Days",
-
         ],
 
-        stock1:[
-
-            round(stock1_df["Close"].mean(),2),
-
-            round(stock1_df["Close"].max(),2),
-
-            round(stock1_df["Close"].min(),2),
-
-            round(stock1_df["Volume"].mean(),2),
-
-            len(stock1_df)
-
+        stock1: [
+            round(stock1_df["Close"].mean(), 2),
+            round(stock1_df["Close"].max(), 2),
+            round(stock1_df["Close"].min(), 2),
+            round(stock1_df["Volume"].mean(), 2),
+            len(stock1_df),
         ],
 
-        stock2:[
-
-            round(stock2_df["Close"].mean(),2),
-
-            round(stock2_df["Close"].max(),2),
-
-            round(stock2_df["Close"].min(),2),
-
-            round(stock2_df["Volume"].mean(),2),
-
-            len(stock2_df)
-
-        ]
-
+        stock2: [
+            round(stock2_df["Close"].mean(), 2),
+            round(stock2_df["Close"].max(), 2),
+            round(stock2_df["Close"].min(), 2),
+            round(stock2_df["Volume"].mean(), 2),
+            len(stock2_df),
+        ],
     })
 
     st.dataframe(
         stats,
         width="stretch",
-        hide_index=True
+        hide_index=True,
     )
 
     st.divider()
 
     # =====================================================
-    # Historical Data
+    # Historical Market Data
     # =====================================================
-    st.subheader("Historical Data")
+    with st.expander(
+        "View Historical Market Data",
+        expanded=False,
+    ):
+        st.subheader("Historical Market Data")
 
-    tab1, tab2 = st.tabs([stock1, stock2])
+        tab1, tab2 = st.tabs([stock1, stock2])
 
-    with tab1:
+        with tab1:
 
-        st.dataframe(
-            stock1_df,
-            width="stretch",
-            hide_index=True
-        )
+            st.dataframe(
+                stock1_df.sort_values(
+                    "Date",
+                    ascending=False,
+                ),
+                width="stretch",
+                hide_index=True,
+            )
 
-    with tab2:
+        with tab2:
 
-        st.dataframe(
-            stock2_df,
-            width="stretch",
-            hide_index=True
-        )
+            st.dataframe(
+                stock2_df.sort_values(
+                    "Date",
+                    ascending=False,
+                ),
+                width="stretch",
+                hide_index=True,
+            )
+
+    st.divider()
+
+    st.caption(
+        "Historical market data is provided by Yahoo Finance. "
+        "Charts and indicators are generated using the selected comparison period."
+    )

@@ -151,7 +151,7 @@ def open_add_user():
         if st.button(
             "Create User",
             type="primary",
-            use_container_width=True,
+            width='stretch',
             key="create_user_btn",
         ):
 
@@ -205,7 +205,7 @@ def open_add_user():
 
         if st.button(
             "Cancel",
-            use_container_width=True,
+            width='stretch',
             key="cancel_add_user",
         ):
             return
@@ -270,7 +270,7 @@ def open_edit_user(user):
         if st.button(
             "Save Changes",
             type="primary",
-            use_container_width=True,
+            width='stretch',
             key=f"save_{user['id']}",
         ):
 
@@ -320,7 +320,7 @@ def open_edit_user(user):
         if st.button(
             "Reset Password",
             key=f"reset_{user['id']}",
-            use_container_width=True,
+            width='stretch',
         ):
             open_reset_password_dialog(user)
 
@@ -333,7 +333,7 @@ def open_edit_user(user):
         if st.button(
             "Delete User",
             key=f"delete_btn_{user['id']}",
-            use_container_width=True,
+            width='stretch',
         ):
             open_delete_user_dialog(user)
 
@@ -373,7 +373,7 @@ def open_reset_password_dialog(user):
         if st.button(
             "Update Password",
             type="primary",
-            use_container_width=True,
+            width='stretch',
             key=f"update_password_{user['id']}",
         ):
 
@@ -406,7 +406,7 @@ def open_reset_password_dialog(user):
 
         if st.button(
             "Cancel",
-            use_container_width=True,
+            width='stretch',
             key=f"cancel_reset_{user['id']}",
         ):
             return
@@ -439,7 +439,7 @@ def open_delete_user_dialog(user):
             "Delete User",
             type="primary",
             key=f"confirm_delete_{user['id']}",
-            use_container_width=True,
+            width='stretch',
         ):
 
             current_user = st.session_state.get("user")
@@ -466,14 +466,13 @@ def open_delete_user_dialog(user):
         if st.button(
             "Cancel",
             key=f"cancel_delete_{user['id']}",
-            use_container_width=True,
+            width='stretch',
         ):
             return
 
 # =====================================================
 # Main Page
 # =====================================================
-
 def show_user_management():
 
     # -------------------------------------------------
@@ -492,29 +491,36 @@ def show_user_management():
     # Header
     # -------------------------------------------------
 
-    header_left, header_right = st.columns([5, 1])
+    st.title("User Management")
 
-    with header_left:
-
-        st.title("User Management")
-        st.caption("Manage users, roles and permissions.")
-
-    with header_right:
-
-        st.write("")
-        st.write("")
-
-        if st.button(
-            "Add User",
-            use_container_width=True,
-            type="primary",
-        ):
-            open_add_user()
+    st.caption(
+        "Manage user accounts, administrator privileges and access permissions."
+    )
 
     st.divider()
 
     # -------------------------------------------------
-    # KPI Cards
+    # Top Action Bar
+    # -------------------------------------------------
+
+    left, right = st.columns([5, 1])
+
+    with left:
+
+        st.subheader("Users")
+
+    with right:
+
+        if st.button(
+            "Add User",
+            type="primary",
+            width="stretch",
+            key="add_user_button",
+        ):
+            open_add_user()
+
+    # -------------------------------------------------
+    # Dashboard Statistics
     # -------------------------------------------------
 
     total, admins, active, disabled = get_statistics(users)
@@ -522,43 +528,50 @@ def show_user_management():
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
+
         st.metric(
-            label="Total Users",
-            value=total,
+            "Total Users",
+            total,
         )
 
     with c2:
+
         st.metric(
-            label="Administrators",
-            value=admins,
+            "Administrators",
+            admins,
         )
 
     with c3:
+
         st.metric(
-            label="Active Users",
-            value=active,
+            "Active Users",
+            active,
         )
 
     with c4:
+
         st.metric(
-            label="Disabled Users",
-            value=disabled,
+            "Disabled Users",
+            disabled,
         )
 
-    st.write("")
+    st.divider()
 
     # -------------------------------------------------
     # Search & Filters
     # -------------------------------------------------
 
-    search_col, role_col, status_col = st.columns([4, 1, 1])
+    st.subheader("Search & Filters")
+
+    search_col, role_col, status_col = st.columns([2, 1, 1])
 
     with search_col:
 
         search = st.text_input(
-            "Search Users",
-            placeholder="🔍 Search by username, name or email...",
+            "Search",
+            placeholder="Search by username, full name or email...",
             label_visibility="collapsed",
+            key="user_search",
         )
 
     with role_col:
@@ -570,6 +583,7 @@ def show_user_management():
                 "Admin",
                 "User",
             ],
+            key="role_filter",
         )
 
     with status_col:
@@ -581,12 +595,11 @@ def show_user_management():
                 "Active",
                 "Disabled",
             ],
+            key="status_filter",
         )
 
-    st.write("")
-
     # -------------------------------------------------
-    # Filter Data
+    # Apply Filters
     # -------------------------------------------------
 
     filtered_users = filter_users(
@@ -600,64 +613,83 @@ def show_user_management():
     # Empty State
     # -------------------------------------------------
 
-    if len(filtered_users) == 0:
+    if not filtered_users:
 
-        st.info("No users found matching your search.")
+        st.info(
+            "No users match the selected filters."
+        )
 
         return
 
     # -------------------------------------------------
-    # User Cards
+    # User List
     # -------------------------------------------------
-
     for user in filtered_users:
 
-        with st.container(border=True):
+        role = "Administrator" if user["is_admin"] else "User"
+        status = "🟢 Active" if user["is_active"] else "🔴 Disabled"
 
-            left, right = st.columns([6, 1])
+        last_login = user["last_login"] or "Never"
 
-            with left:
+        top_left, top_right = st.columns([6, 1])
 
-                st.markdown(
-                    f"### 👤 {user['full_name']}"
-                )
+        with top_left:
 
-                st.caption(
-                    f"@{user['username']}"
-                )
+            st.markdown(f"### {user['full_name']}")
 
-                st.markdown(
-                    f"{user['email']}"
-                )
+            st.caption(f"@{user['username']}")
 
-                st.markdown(
-                    role_badge(user)
-                )
+        with top_right:
 
-                st.markdown(
-                    status_badge(user)
-                )
+            if st.button(
+                "Edit",
+                key=f"edit_{user['id']}",
+                width="stretch",
+            ):
+                open_edit_user(user)
 
-                last_login = user["last_login"]
+        info1, info2, info3 = st.columns(3)
 
-                if not last_login:
-                    last_login = "Never"
+        with info1:
 
-                st.caption(
-                    f"Last Login: {last_login}"
-                )
+            st.markdown("**Email**")
 
-            with right:
+            st.write(user["email"])
 
-                st.write("")
-                st.write("")
-                st.write("")
+        with info2:
 
-                if st.button(
-                    "Edit Profile",
-                    key=f"edit_{user['id']}",
-                    use_container_width=True,
-                ):
-                    open_edit_user(user)
+            st.markdown("**Role**")
+
+            st.write(role)
+
+        with info3:
+
+            st.markdown("**Status**")
+
+            st.write(status)
 
         st.write("")
+
+        info4, info5 = st.columns(2)
+
+        with info4:
+
+            st.markdown("**Last Login**")
+
+            st.write(last_login)
+
+        with info5:
+
+            st.markdown("**User ID**")
+
+            st.write(user["id"])
+        
+        st.divider()
+
+    # -------------------------------------------------
+    # Summary
+    # -------------------------------------------------
+
+    st.caption(
+        f"Displaying {len(filtered_users)} of {len(users)} registered users."
+    )

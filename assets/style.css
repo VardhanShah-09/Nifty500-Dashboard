@@ -63,36 +63,6 @@ footer {
 }
 
 /* ===========================
-   BUTTON
-=========================== */
-
-.stButton>button{
-
-    width:100%;
-
-    border-radius:10px;
-
-    height:50px;
-
-    font-size:18px;
-
-    font-weight:600;
-
-    background:#00C853;
-
-    color:white;
-
-    border:none;
-
-}
-
-.stButton>button:hover{
-
-    background:#00B248;
-
-}
-
-/* ===========================
    INPUTS
 =========================== */
 
@@ -163,32 +133,6 @@ footer {
     border: 1px solid #3A3F47 !important;
     border-radius: 10px;
     height: 48px;
-}
-
-/* ===========================
-   BUTTON
-=========================== */
-
-.stButton>button{
-
-    height:50px;
-
-    border-radius:10px;
-
-    background:#00C853;
-
-    color:white;
-
-    font-size:18px;
-
-    font-weight:600;
-
-    border:none;
-}
-
-.stButton>button:hover{
-
-    background:#00B248;
 }
 
 /* ===========================

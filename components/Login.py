@@ -47,7 +47,7 @@ def show_login():
 
         remember = st.checkbox("Remember Me")
 
-        if st.button("Login to Dashboard", use_container_width=True):
+        if st.button("Login to Dashboard", width='stretch'):
 
             user = login_user(login, password)
 

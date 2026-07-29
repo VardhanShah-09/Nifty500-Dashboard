@@ -15,52 +15,60 @@ from services.live_data import get_historical_stock_data
 def show():
 
     # =====================================================
-    # Page Configuration
-    # =====================================================
-    st.set_page_config(
-        page_title="Stock Analysis",
-        layout="wide"
-    )
-
-    # =====================================================
-    # Load Ticker List
+    # Load Dataset
     # =====================================================
     df = load_data()
 
     # =====================================================
-    # Sidebar
+    # Page Header
     # =====================================================
-    st.sidebar.title("📈 Stock Analysis")
-
-    ticker = st.sidebar.selectbox(
-        "Select Stock",
-        sorted(df["Ticker"].unique()),
-        key="analysis_stock"
+    st.title("Stock Analysis")
+    st.caption(
+        "Analyze historical price movements and technical indicators for any Nifty500 stock."
     )
 
-    period = st.sidebar.selectbox(
-        "Select Time Period",
-        [
-            "1mo",
-            "3mo",
-            "6mo",
-            "1y",
-            "2y",
-            "5y",
-            "max"
-        ],
-        index=5,
-        key="analysis_period"
-    )
+    st.divider()
+
+    # =====================================================
+    # Stock Selection
+    # =====================================================
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        ticker = st.selectbox(
+            "Select Stock",
+            sorted(df["Ticker"].unique()),
+            key="analysis_stock",
+        )
+
+    with col2:
+
+        period = st.selectbox(
+            "Time Period",
+            [
+                "1mo",
+                "3mo",
+                "6mo",
+                "1y",
+                "2y",
+                "5y",
+                "max",
+            ],
+            index=5,
+            key="analysis_period",
+        )
+
+    st.divider()
 
     # =====================================================
     # Load Historical Data
     # =====================================================
-    with st.spinner("Loading historical market data..."):
+    with st.spinner("Loading market data..."):
 
         stock_df = get_historical_stock_data(
             ticker,
-            period
+            period,
         )
 
     if stock_df.empty:
@@ -72,64 +80,128 @@ def show():
     latest = stock_df.iloc[-1]
 
     # =====================================================
-    # Header
+    # Overview
     # =====================================================
-    st.title("📈 Stock Analysis")
+    st.subheader("Market Overview")
 
-    st.caption(
-        f"Technical analysis for **{ticker}** "
-        f"over the selected period."
-    )
-
-    # =====================================================
-    # Live Metrics
-    # =====================================================
     col1, col2, col3, col4, col5 = st.columns(5)
 
+    previous_close = stock_df.iloc[-2]["Close"]
+
+    daily_change = latest["Close"] - previous_close
+
+    daily_change_pct = (
+        daily_change / previous_close
+    ) * 100
+
     with col1:
+
         st.metric(
             "Current Price",
-            f"₹{latest['Close']:.2f}"
+            f"₹{latest['Close']:.2f}",
+            f"{daily_change:+.2f}",
         )
 
     with col2:
+
         st.metric(
-            "52 Period High",
-            f"₹{stock_df['High'].max():.2f}"
+            "Period High",
+            f"₹{stock_df['High'].max():.2f}",
         )
 
     with col3:
+
         st.metric(
-            "52 Period Low",
-            f"₹{stock_df['Low'].min():.2f}"
+            "Period Low",
+            f"₹{stock_df['Low'].min():.2f}",
         )
 
     with col4:
+
         st.metric(
             "Average Volume",
-            f"{stock_df['Volume'].mean():,.0f}"
+            f"{stock_df['Volume'].mean():,.0f}",
         )
 
     with col5:
 
-        change = latest["Close"] - stock_df.iloc[-2]["Close"]
-
         st.metric(
-            "Daily Change",
-            f"₹{change:.2f}",
-            f"{change:.2f}"
+            "Daily Return",
+            f"{daily_change_pct:+.2f}%",
         )
 
     st.divider()
 
     # =====================================================
-    # Candlestick + Technical Indicators
+    # Technical Snapshot
     # =====================================================
-    st.subheader("Candlestick Chart")
+    st.subheader("📈 Technical Snapshot")
+
+    if latest["Close"] > latest["SMA20"] > latest["SMA50"]:
+        trend = "🟢 Bullish"
+
+    elif latest["Close"] < latest["SMA20"] < latest["SMA50"]:
+        trend = "🔴 Bearish"
+
+    else:
+        trend = "🟡 Sideways"
+
+    if latest["RSI"] > 70:
+        rsi_status = "Overbought"
+
+    elif latest["RSI"] < 30:
+        rsi_status = "Oversold"
+
+    else:
+        rsi_status = "Neutral"
+
+    if latest["MACD"] > latest["Signal"]:
+        macd_status = "Bullish"
+
+    else:
+        macd_status = "Bearish"
+
+    c1, c2, c3, c4 = st.columns(4)
+
+    with c1:
+
+        st.metric(
+            "Trend",
+            trend,
+        )
+
+    with c2:
+
+        st.metric(
+            "RSI",
+            f"{latest['RSI']:.2f}",
+            rsi_status,
+        )
+
+    with c3:
+
+        st.metric(
+            "MACD",
+            f"{latest['MACD']:.2f}",
+            macd_status,
+        )
+
+    with c4:
+
+        st.metric(
+            "SMA20",
+            f"₹{latest['SMA20']:.2f}",
+        )
+
+    st.divider()
+
+    # =====================================================
+    # Price Action
+    # =====================================================
+    st.subheader("Price Action")
 
     fig = go.Figure()
 
-    # Candlestick
     fig.add_trace(
         go.Candlestick(
             x=stock_df["Date"],
@@ -137,104 +209,99 @@ def show():
             high=stock_df["High"],
             low=stock_df["Low"],
             close=stock_df["Close"],
-            name="Price"
+            name="Price",
         )
     )
 
-    # SMA20
     fig.add_trace(
         go.Scatter(
             x=stock_df["Date"],
             y=stock_df["SMA20"],
             mode="lines",
             name="SMA20",
-            line=dict(width=2)
+            line=dict(width=2),
         )
     )
 
-    # SMA50
     fig.add_trace(
         go.Scatter(
             x=stock_df["Date"],
             y=stock_df["SMA50"],
             mode="lines",
             name="SMA50",
-            line=dict(width=2)
+            line=dict(width=2),
         )
     )
 
-    # Upper Bollinger Band
     fig.add_trace(
         go.Scatter(
             x=stock_df["Date"],
             y=stock_df["Upper_Band"],
             mode="lines",
             name="Upper Band",
-            line=dict(
-                dash="dot",
-                width=1.5
-            )
+            line=dict(width=1, dash="dot"),
         )
     )
 
-    # Lower Bollinger Band
     fig.add_trace(
         go.Scatter(
             x=stock_df["Date"],
             y=stock_df["Lower_Band"],
             mode="lines",
             name="Lower Band",
-            line=dict(
-                dash="dot",
-                width=1.5
-            )
+            line=dict(width=1, dash="dot"),
         )
     )
 
     fig.update_layout(
         template="plotly_dark",
         height=650,
-        title=f"{ticker} Price Action",
+        title=f"{ticker} Price Chart",
+        hovermode="x unified",
         xaxis_rangeslider_visible=False,
         legend=dict(
             orientation="h",
             y=1.02,
-            x=0
-        )
+            x=0,
+        ),
     )
 
     st.plotly_chart(
         fig,
-        width="stretch"
+        width="stretch",
     )
 
+    st.divider()
+
     # =====================================================
-    # Volume Chart
+    # Volume Analysis
     # =====================================================
-    st.subheader("Trading Volume")
+    st.subheader("Volume Analysis")
 
     volume_fig = px.bar(
         stock_df,
         x="Date",
         y="Volume",
-        title="Daily Trading Volume"
+        title="Trading Volume",
     )
 
     volume_fig.update_layout(
         template="plotly_dark",
         height=350,
-        showlegend=False
+        showlegend=False,
     )
 
     st.plotly_chart(
         volume_fig,
-        width="stretch"
+        width="stretch",
     )
-    
-        # =====================================================
-    # RSI Chart
+
+    st.divider()
+
     # =====================================================
-    st.subheader("Relative Strength Index (RSI)")
+    # RSI Analysis
+    # =====================================================
+    st.subheader("Relative Strength Index")
 
     rsi_fig = go.Figure()
 
@@ -244,25 +311,19 @@ def show():
             y=stock_df["RSI"],
             mode="lines",
             name="RSI",
-            line=dict(width=2)
         )
     )
 
     rsi_fig.add_hline(
         y=70,
         line_dash="dash",
-        annotation_text="Overbought (70)"
+        annotation_text="Overbought",
     )
 
     rsi_fig.add_hline(
         y=30,
         line_dash="dash",
-        annotation_text="Oversold (30)"
-    )
-
-    rsi_fig.add_hline(
-        y=50,
-        line_dash="dot"
+        annotation_text="Oversold",
     )
 
     rsi_fig.update_layout(
@@ -274,11 +335,13 @@ def show():
 
     st.plotly_chart(
         rsi_fig,
-        width="stretch"
+        width="stretch",
     )
 
+    st.divider()
+
     # =====================================================
-    # MACD Chart
+    # MACD Analysis
     # =====================================================
     st.subheader("MACD")
 
@@ -288,8 +351,7 @@ def show():
         go.Scatter(
             x=stock_df["Date"],
             y=stock_df["MACD"],
-            mode="lines",
-            name="MACD"
+            name="MACD",
         )
     )
 
@@ -297,8 +359,7 @@ def show():
         go.Scatter(
             x=stock_df["Date"],
             y=stock_df["Signal"],
-            mode="lines",
-            name="Signal"
+            name="Signal",
         )
     )
 
@@ -306,153 +367,110 @@ def show():
         go.Bar(
             x=stock_df["Date"],
             y=stock_df["Histogram"],
-            name="Histogram"
+            name="Histogram",
         )
     )
 
     macd_fig.update_layout(
         template="plotly_dark",
         height=400,
-        barmode="relative"
+        barmode="relative",
     )
 
     st.plotly_chart(
         macd_fig,
-        width="stretch"
+        width="stretch",
     )
 
-    # =====================================================
-    # Technical Summary
-    # =====================================================
-    st.subheader("Technical Summary")
-
-    latest = stock_df.iloc[-1]
-
-    trend = "Sideways"
-    trend_color = "🟡"
-
-    if latest["Close"] > latest["SMA20"] > latest["SMA50"]:
-        trend = "Bullish"
-        trend_color = "🟢"
-
-    elif latest["Close"] < latest["SMA20"] < latest["SMA50"]:
-        trend = "Bearish"
-        trend_color = "🔴"
-
-    if latest["RSI"] > 70:
-        rsi_status = "Overbought"
-        rsi_icon = "🔴"
-
-    elif latest["RSI"] < 30:
-        rsi_status = "Oversold"
-        rsi_icon = "🟢"
-
-    else:
-        rsi_status = "Neutral"
-        rsi_icon = "🟡"
-
-    if latest["MACD"] > latest["Signal"]:
-        macd_status = "Bullish Crossover"
-        macd_icon = "🟢"
-
-    else:
-        macd_status = "Bearish Crossover"
-        macd_icon = "🔴"
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        st.success("Market Trend")
-
-        st.write(f"**Trend :** {trend_color} {trend}")
-
-        st.write(
-            f"**Price :** ₹{latest['Close']:.2f}"
-        )
-
-        st.write(
-            f"**SMA20 :** ₹{latest['SMA20']:.2f}"
-        )
-
-        st.write(
-            f"**SMA50 :** ₹{latest['SMA50']:.2f}"
-        )
-
-    with col2:
-
-        st.info("Momentum Indicators")
-
-        st.write(
-            f"**RSI :** {rsi_icon} {latest['RSI']:.2f} ({rsi_status})"
-        )
-
-        st.write(
-            f"**MACD :** {latest['MACD']:.2f}"
-        )
-
-        st.write(
-            f"**Signal :** {latest['Signal']:.2f}"
-        )
-
-        st.write(
-            f"**Histogram :** {latest['Histogram']:.2f}"
-        )
-
-        st.write(
-            f"**MACD Signal :** {macd_icon} {macd_status}"
-        )
+    st.divider()
 
     # =====================================================
-    # Statistics
+    # Performance Statistics
     # =====================================================
-    st.subheader("Statistics")
+    st.subheader("Performance Statistics")
 
-    stat1, stat2 = st.columns(2)
+    stat1, stat2, stat3, stat4 = st.columns(4)
 
     with stat1:
 
-        st.write(
-            f"Highest Close : ₹{stock_df['Close'].max():.2f}"
-        )
-
-        st.write(
-            f"Lowest Close : ₹{stock_df['Close'].min():.2f}"
-        )
-
-        st.write(
-            f"Average Close : ₹{stock_df['Close'].mean():.2f}"
-        )
-
-        st.write(
-            f"Standard Deviation : ₹{stock_df['Close'].std():.2f}"
+        st.metric(
+            "Highest Close",
+            f"₹{stock_df['Close'].max():.2f}",
         )
 
     with stat2:
 
-        st.write(
-            f"Trading Days : {len(stock_df)}"
+        st.metric(
+            "Lowest Close",
+            f"₹{stock_df['Close'].min():.2f}",
         )
 
-        st.write(
-            f"Average Volume : {stock_df['Volume'].mean():,.0f}"
+    with stat3:
+
+        st.metric(
+            "Average Close",
+            f"₹{stock_df['Close'].mean():.2f}",
         )
 
-        st.write(
-            f"Maximum Volume : {stock_df['Volume'].max():,.0f}"
+    with stat4:
+
+        st.metric(
+            "Trading Days",
+            len(stock_df),
         )
 
-        st.write(
-            f"Minimum Volume : {stock_df['Volume'].min():,.0f}"
-        )
+    st.divider()
 
     # =====================================================
-    # Historical Data
+    # Volume Statistics
     # =====================================================
-    with st.expander("View Historical Data", expanded=False):
+    st.subheader("Volume Statistics")
+
+    c1, c2, c3 = st.columns(3)
+
+    with c1:
+
+        st.metric(
+            "Average Volume",
+            f"{stock_df['Volume'].mean():,.0f}",
+        )
+
+    with c2:
+
+        st.metric(
+            "Maximum Volume",
+            f"{stock_df['Volume'].max():,.0f}",
+        )
+
+    with c3:
+
+        st.metric(
+            "Minimum Volume",
+            f"{stock_df['Volume'].min():,.0f}",
+        )
+
+    st.divider()
+
+    # =====================================================
+    # Historical Dataset
+    # =====================================================
+    with st.expander(
+        "View Historical Market Data",
+        expanded=False,
+    ):
 
         st.dataframe(
-            stock_df,
+            stock_df.sort_values(
+                "Date",
+                ascending=False,
+            ),
             width="stretch",
-            hide_index=True
+            hide_index=True,
         )
+
+    st.divider()
+
+    st.caption(
+        "Historical market data sourced from Yahoo Finance. "
+        "Technical indicators are calculated using historical OHLCV data."
+    )
