@@ -1,17 +1,12 @@
 import streamlit as st
 
 # =====================================================
-# Import Components
+# Import Login Component Only
 # =====================================================
 
 from components.Login import show_login
-from components.Dashboard import show as dashboard
-from components.Stock_Analysis import show as stock_analysis
-from components.Prediction import show as prediction
-from components.Comparison import show as comparison
-from components.Market_Overview import show as market_overview
-from admin.User_Management import show_user_management
 
+st.set_page_config(layout="wide",)
 # =====================================================
 # Session State Initialization
 # =====================================================
@@ -31,7 +26,6 @@ if "role" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Dashboard"
 
-
 # =====================================================
 # Login Check
 # =====================================================
@@ -40,42 +34,43 @@ if not st.session_state.logged_in:
     show_login()
     st.stop()
 
-
 # =====================================================
 # Sidebar
 # =====================================================
+
 with st.sidebar:
+
     st.subheader("📈 Nifty500")
-    if st.button("🏠 Dashboard", width= 'stretch'):
+
+    if st.button("🏠 Dashboard", width="stretch"):
         st.session_state.current_page = "Dashboard"
 
-    if st.button("📊 Stock Analysis", width='stretch'):
+    if st.button("📊 Stock Analysis", width="stretch"):
         st.session_state.current_page = "Stock Analysis"
 
-    if st.button("🤖 Prediction", width='stretch'):
+    if st.button("🤖 Prediction", width="stretch"):
         st.session_state.current_page = "Prediction"
 
-    if st.button("⚖️ Comparison", width='stretch'):
+    if st.button("⚖️ Comparison", width="stretch"):
         st.session_state.current_page = "Comparison"
 
-    if st.button("ℹ️ Market Overview", width='stretch'):
+    if st.button("ℹ️ Market Overview", width="stretch"):
         st.session_state.current_page = "About"
-    
-    if st.session_state.is_admin:
-        if st.button("👥 User Management", width='stretch'):
-            st.session_state.current_page = "User Management"
-    
 
-    st.markdown(
-        f"### {st.session_state.user['full_name']}")
+    if st.session_state.is_admin:
+        if st.button("👥 User Management", width="stretch"):
+            st.session_state.current_page = "User Management"
+
+    st.divider()
+
+    st.markdown(f"### {st.session_state.user['full_name']}")
 
     if st.session_state.is_admin:
         st.write("Admin")
     else:
         st.write("User")
 
-
-    if st.button("🚪 Logout", key="nav_logout", width='stretch'):
+    if st.button("🚪 Logout", key="nav_logout", width="stretch"):
 
         st.session_state.logged_in = False
         st.session_state.user = None
@@ -86,25 +81,37 @@ with st.sidebar:
         st.rerun()
 
 # =====================================================
-# Main Content
+# Main Content (Lazy Loading)
 # =====================================================
 
 page = st.session_state.current_page
 
 if page == "Dashboard":
-    dashboard()
+
+    from components.Dashboard import show
+    show()
 
 elif page == "Stock Analysis":
-    stock_analysis()
+
+    from components.Stock_Analysis import show
+    show()
 
 elif page == "Prediction":
-    prediction()
+
+    from components.Prediction import show
+    show()
 
 elif page == "Comparison":
-    comparison()
+    
+    from components.Comparison import show
+    show()
 
 elif page == "About":
-    market_overview()
+    
+    from components.Market_Overview import show
+    show()
 
 elif page == "User Management":
+
+    from admin.User_Management import show_user_management
     show_user_management()

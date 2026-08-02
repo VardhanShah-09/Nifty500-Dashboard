@@ -3,11 +3,12 @@ Live Market Data Service
 ------------------------
 Fetches live NSE stock data using Yahoo Finance.
 """
-
+import streamlit as st
 from datetime import datetime
 import yfinance as yf
 import pandas as pd
 
+@st.cache_data(ttl=30, show_spinner=False)
 def get_live_stock_data(symbol: str):
     """
     Fetch live stock information from Yahoo Finance.
@@ -54,6 +55,7 @@ def get_live_stock_data(symbol: str):
             "error": str(e),
         }
 
+@st.cache_data(ttl=300, show_spinner=False)
 def get_historical_stock_data(symbol: str, period: str = "5y"):
     """
     Fetch historical OHLCV data from Yahoo Finance.
@@ -223,6 +225,7 @@ def calculate_bollinger_bands(close_prices, period=20, std_dev=2):
     return upper_band, middle_band, lower_band
 
 
+@st.cache_data(ttl=300, show_spinner=False)
 def prepare_prediction_features(symbol: str):
     """
     Prepare the latest feature vector for the prediction model.

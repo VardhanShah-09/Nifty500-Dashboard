@@ -1,24 +1,19 @@
 from pathlib import Path
-
 import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import joblib
 import numpy as np
 import pandas as pd
 import streamlit as st
-import tensorflow as tf
-import xgboost as xgb
-
 
 # ==========================================================
 # Paths
 # ==========================================================
 
 ROOT = Path(__file__).resolve().parents[1]
-
 MODELS = ROOT / "models"
-
 
 # ==========================================================
 # Feature Columns
@@ -61,25 +56,24 @@ LSTM_FEATURES = [
 
 SEQUENCE_LENGTH = 60
 
-
 # ==========================================================
 # Load Random Forest
 # ==========================================================
 
 @st.cache_resource
 def load_random_forest():
-
     return joblib.load(
         MODELS / "random_forest.pkl"
     )
 
-
 # ==========================================================
-# Load XGBoost
+# Load XGBoost (Lazy Import)
 # ==========================================================
 
 @st.cache_resource
 def load_xgboost():
+
+    import xgboost as xgb
 
     model = xgb.XGBRegressor()
 
@@ -89,18 +83,18 @@ def load_xgboost():
 
     return model
 
-
 # ==========================================================
-# Load LSTM
+# Load LSTM (Lazy Import)
 # ==========================================================
 
 @st.cache_resource
 def load_lstm():
 
-    return tf.keras.models.load_model(
+    from tensorflow.keras.models import load_model # type: ignore
+
+    return load_model(
         MODELS / "lstm.keras"
     )
-
 
 # ==========================================================
 # Load Scalers
@@ -108,7 +102,6 @@ def load_lstm():
 
 @st.cache_resource
 def load_feature_scaler():
-
     return joblib.load(
         MODELS / "feature_scaler.pkl"
     )
@@ -116,7 +109,6 @@ def load_feature_scaler():
 
 @st.cache_resource
 def load_target_scaler():
-
     return joblib.load(
         MODELS / "target_scaler.pkl"
     )
@@ -138,7 +130,6 @@ def predict_random_forest(latest):
 
     return float(prediction)
 
-
 # ==========================================================
 # XGBoost Prediction
 # ==========================================================
@@ -156,7 +147,6 @@ def predict_xgboost(latest):
 
     return float(prediction)
 
-
 # ==========================================================
 # LSTM Prediction
 # ==========================================================
@@ -171,7 +161,6 @@ def predict_lstm(history):
     model = load_lstm()
 
     feature_scaler = load_feature_scaler()
-
     target_scaler = load_target_scaler()
 
     sequence = history[LSTM_FEATURES].tail(SEQUENCE_LENGTH)
@@ -180,12 +169,12 @@ def predict_lstm(history):
 
     sequence = np.expand_dims(
         sequence,
-        axis=0
+        axis=0,
     )
 
     prediction = model.predict(
         sequence,
-        verbose=0
+        verbose=0,
     )[0][0]
 
     prediction = target_scaler.inverse_transform(
@@ -193,7 +182,6 @@ def predict_lstm(history):
     )[0][0]
 
     return float(prediction)
-
 
 # ==========================================================
 # Common Prediction Interface
@@ -204,11 +192,9 @@ def predict_stock(model_name, latest=None, history=None):
     model_name = model_name.lower()
 
     if model_name == "random forest":
-
         return predict_random_forest(latest)
 
     elif model_name == "xgboost":
-
         return predict_xgboost(latest)
 
     elif model_name == "lstm":
@@ -221,7 +207,7 @@ def predict_stock(model_name, latest=None, history=None):
         return predict_lstm(history)
 
     else:
-
         raise ValueError(
             f"Unknown model: {model_name}"
         )
+    

@@ -14,7 +14,7 @@ sys.path.append(str(ROOT))
 from utils.loader import load_data
 
 def show():
-    st.set_page_config(layout="wide",)
+    
     # =====================================================
     # Load Dataset
     # =====================================================
